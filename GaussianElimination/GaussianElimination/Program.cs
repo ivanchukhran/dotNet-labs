@@ -1,41 +1,46 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
-using System.Numerics;
-using System.Text;
+using System.Diagnostics;
 using Solution;
 
-// var matrix = new double[3, 4];
-// for (int i = 0; i < 3; i++)
-// {
-//     for (int j = 0; j < 4; j++)
-//     {
-//         matrix[i, j] = i + j;
-//     }
-// }
-//
-// var sb = new StringBuilder();
-// for (int i = 0; i < 3; i++)
-// {
-//     sb.Append("[");
-//     for (int j = 0; j < 4; j++)
-//     {
-//         sb.Append($"{matrix[i, j]} ");
-//     }
-//     sb.Append("]\n");
-// }
-// Console.WriteLine(sb.ToString());
-
-// var matrix = new Matrix(3, 4, 3.14);
-// var solution = GaussianElimination.Solve(matrix);
-// Console.WriteLine($"Source matrix: \n{matrix.ToString()}");
-// Console.WriteLine($"Solution: \n{solution.ToString()}");
-
-double[,] matrix = { {1, 2, 3 }, {4, 5, 6}, {7, 8, 9} };
-var a = new Matrix(matrix);
-var (l, u) = LU.Decompose(a);
-double[] b = {1, 2, 3};
-LU.Eliminate(b, l, u);
-Console.WriteLine($"Source matrix: \n{a.ToString()}");
-Console.WriteLine($"L: \n{l.ToString()}");
-Console.WriteLine($"U: \n{u.ToString()}");
-Console.WriteLine($"Solution: \n{b.ToString()}");
+var maxThreads = 2;
+var sizes = new[]
+{
+    16, 64, 128, 256, 512, 1024, 10000
+};
+var random = new Random();
+foreach (var size in sizes)
+{
+    var a = Matrix.Random(size, size);
+    var b = new double[size];
+    for (var i = 0; i < size; i++)
+    {
+        b[i] = random.NextDouble();
+    }
+    Console.WriteLine($"Size: {size}");
+    Console.WriteLine("Sequential");
+    var watch = Stopwatch.StartNew();
+    var (l, u) = LU.Decompose(a);
+    watch.Stop();
+    var decompositionTime = watch.ElapsedMilliseconds;
+    Console.WriteLine($"Decomposition time: {decompositionTime} ms");
+    watch = Stopwatch.StartNew();
+    var solution = LU.Eliminate(b, l, u);
+    watch.Stop();
+    var solutionTime = watch.ElapsedMilliseconds;
+    Console.WriteLine($"Solution time: {solutionTime} ms");
+    Console.WriteLine($"Total time: {decompositionTime + solutionTime} ms");
+    Console.WriteLine($"Parallel: {maxThreads} threads");
+    watch = Stopwatch.StartNew();
+    (l, u) = LU.DecomposeParallel(a,  maxThreads);
+    watch.Stop();
+    decompositionTime = watch.ElapsedMilliseconds;
+    Console.WriteLine($"Decomposition time: {decompositionTime} ms");
+    watch = Stopwatch.StartNew();
+    solution = LU.EliminateParallel(b, l, u, maxThreads);
+    watch.Stop();
+    solutionTime = watch.ElapsedMilliseconds;
+    Console.WriteLine($"Solution time: {solutionTime} ms");
+    Console.WriteLine($"Total time: {decompositionTime + solutionTime} ms");
+    
+}

@@ -1,6 +1,7 @@
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Xml;
 
 namespace Solution;
 
@@ -25,6 +26,17 @@ public class Matrix
         }
     }
 
+    public Matrix(double[] values)
+    {
+        Rows = 1;
+        Columns = values.Length;
+        Values = new double[Rows, Columns];
+        for (var i = 0; i < Columns; i++)
+        {
+            Values[0, i] = values[i];
+        }
+    }
+
     public Matrix(double[,] values)
     {
         Rows = values.GetLength(0);
@@ -37,6 +49,23 @@ public class Matrix
                 Values[i, j] = values[i, j];
             }
         }
+    }
+
+    public static Matrix Random(int rows, int columns)
+    {
+        if (rows <= 0 || columns <= 0)
+        {
+            throw new ArgumentException("Rows and columns must be positive");
+        }
+        var matrix = new Matrix(rows, columns, 0);
+        var random = new Random();
+        for (var i = 0; i < rows; i++) {
+            for (var j = 0; j < columns; j++)
+            {
+                matrix[i, j] = random.NextDouble();
+            }
+        }
+        return matrix;
     }
 
     public double this[int row, int column]
@@ -97,15 +126,8 @@ public class Matrix
         var sb = new StringBuilder();
         for (var i = 0; i < Rows; i++)
         {
-            sb.Append("[");
-            for (var j = 0; j < Columns; j++)
-            {
-                sb.Append($"{this[i, j]} ");
-            }
-
-            sb.Append("]\n");
+            sb.AppendLine(ArrayUtils.ArrayToString(GetRow(i)));
         }
-
         return sb.ToString();
     }
 
